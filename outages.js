@@ -13,16 +13,16 @@ async function getJson() {
 // 	var url = 'http://localhost:8000/getOutagesRegions.json'
 // 	var url = 'http://localhost:8000/outages.json'
 
-
-  try {
-	const outages = await fetch(url).then(r => r.json());
-
-  } catch (e) {
-  	console.log('The PG&E outage API is down, please try again.') 
-  	return
-  } // in case the API is down
-	
+// 
+//   try {
 // 	const outages = await fetch(url).then(r => r.json());
+
+//   } catch (e) {
+//   	console.log('The PG&E outage API is down, please try again.') 
+//   	return
+//   } // in case the API is down, not totally sure if this ^ actually works
+	
+	const outages = await fetch(url).then(r => r.json());
     
     outages.outagesRegions.forEach(x => {
 		var regionCoords
