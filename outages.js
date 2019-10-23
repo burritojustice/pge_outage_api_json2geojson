@@ -25,25 +25,26 @@ async function getJson() {
 	const outages = await fetch(url).then(r => r.json());
     
     outages.outagesRegions.forEach(x => {
-		var regionCoords
-	    regionCoords = [Number(x.longitude),Number(x.latitude)]
-		var regionPoint = {"type":"Point","coordinates": regionCoords}
-		var Pointfeature = {
-			type: 'Feature',
-			geometry: regionPoint,
-			id: x.id,
-// 			properties: x
-			properties: {
-				id: x.id,
-				kind: 'region',
-				name: x.regionName,
-				outages: Number(x.numOutages)
-			}
-    	}  
-//     	console.log(feature)
-		data.push(Pointfeature)
+	    //region summary info is not that useful to display when there are a lot of outages
+// 		var regionCoords
+// 	        regionCoords = [Number(x.longitude),Number(x.latitude)]
+// 		var regionPoint = {"type":"Point","coordinates": regionCoords}
+// 		var Pointfeature = {
+// 			type: 'Feature',
+// 			geometry: regionPoint,
+// 			id: x.id,
+// // 			properties: x
+// 			properties: {
+// 				id: x.id,
+// 				kind: 'region',
+// 				name: x.regionName,
+// 				outages: Number(x.numOutages)
+// 			}
+//     	        }  
+// //     	console.log(feature)
+// 		data.push(Pointfeature)
 		
-		// look for polygons
+		// look for outage polygons
 		var pointCoords = []
 		// looks through each region's outage(s)
 		x.outages.forEach(y => {
@@ -64,20 +65,7 @@ async function getJson() {
 				delete props2geojson.longitude
 				
 				var timeObject = makeTimeObject(y)
-
-				// convert timestamps
-// 				var timezone = {timeZone: "America/Los_Angeles"}
-// 				var outageStartTimeLocale = new Date(y.outageStartTime*1000).toLocaleString()
-// 				var lastUpdateTimeLocale = new Date(y.lastUpdateTime*1000).toLocaleString()
-// 				
-// 				// generate length of outage as a property
-// 				var duration = lastUpdateTimeLocale - outageStartTimeLocale
-// 				var outageInHours = (y.lastUpdateTime*1000 - y.outageStartTime*1000)/1000/60/60
-// 				var outageInHours = Math.round(outageInHours)
-// 				// build properties object
-// 				var timeObject = {outageStartTimeLocale: outageStartTimeLocale, lastUpdateTimeLocale: lastUpdateTimeLocale, outageInHours: outageInHours}
-				
-				
+	
 				outageProps = Object.assign({kind: 'outage_polygon'}, outageName, props2geojson, timeObject)
 
 				// add the first point to the end of the polygon string because geojson
@@ -112,7 +100,6 @@ async function getJson() {
 				}
 				
 			data.push(outagePoint)
-			//if the polygon exists, build it
 
 		})		
 	});   
