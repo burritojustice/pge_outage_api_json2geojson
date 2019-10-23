@@ -7,7 +7,7 @@ async function toXYZ() {
 	const space = process.argv.length > 2 ? process.argv[2] : process.env.XYZ_SPACE;
 	const token = process.argv.length > 3 ? process.argv[3] : process.env.XYZ_TOKEN;
 
-	fetch(`https://xyz.api.here.com/hub/spaces/${space}/features`, {
+	await fetch(`https://xyz.api.here.com/hub/spaces/${space}/features`, {
         method: 'put',
         body:    await getGeoJson(),
         headers: { 
