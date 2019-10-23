@@ -1,5 +1,4 @@
-var fetch = require('node-fetch')
-const fs = require('fs');
+const fetch = require('node-fetch');
 
 // var argv = require('minimist')(process.argv.slice(2));
 // argv = argv["_"]
@@ -134,14 +133,11 @@ async function getJson() {
 		return timeObject
 	}
 	
-	fs.writeFileSync('outages.geojson', JSON.stringify({
+	return JSON.stringify({
 		type: 'FeatureCollection',
 		features: data
-	}));
-	 
+	});
 }
 
-
-getJson();
-
+module.exports.getGeoJson = getJson;
 
