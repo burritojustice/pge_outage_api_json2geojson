@@ -7,11 +7,11 @@ async function toXYZ() {
 	const space = process.argv.length > 2 ? process.argv[2] : process.env.XYZ_SPACE;
 	const token = process.argv.length > 3 ? process.argv[3] : process.env.XYZ_TOKEN;
 
-    function checkStatus(res) {
+    async function checkStatus(res) {
         if (res.ok) { // res.status >= 200 && res.status < 300
             return res;
         } else {
-            throw Error(`Error during upload. Status: ${res.statusCode}`);
+            throw new Error(`Error during upload. Status: ${res.statusCode}`);
         }
     };
 
