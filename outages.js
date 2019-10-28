@@ -13,35 +13,11 @@ async function getJson() {
 // 	var url = 'http://localhost:8000/getOutagesRegions.json'
 // 	var url = 'https://www.monkeybrains.net/map/outages.php?pge' 
 
-
-
-//   try {
-// 	const outages = await fetch(url).then(r => r.json());
-//   } catch (e) {
-//   	console.log('The PG&E outage API is down, please try again.') 
-//   	return
-//   } // in case the API is down
-	
 	const outages = await fetch(url).then(r => r.json());
     
     outages.outagesRegions.forEach(x => {
-		var regionCoords
-	    regionCoords = [Number(x.longitude),Number(x.latitude)]
-		var regionPoint = {"type":"Point","coordinates": regionCoords}
-		var Pointfeature = {
-			type: 'Feature',
-			geometry: regionPoint,
-			id: x.id,
-// 			properties: x
-			properties: {
-				id: x.id,
-				kind: 'region',
-				name: x.regionName,
-				outages: Number(x.numOutages)
-			}
-    	}  
-//     	console.log(feature)
-		data.push(Pointfeature)
+    
+    	// makeRegionPoints(x) // adding region points in the same space doesn't really look good, confusing
 		
 		// look for polygons
 		var pointCoords = []
@@ -64,21 +40,15 @@ async function getJson() {
 				delete props2geojson.longitude
 				
 				var timeObject = makeTimeObject(y)
+				
+				var polygonTag = {
+					"@ns:com:here:xyz": {
+					  "tags": [
+						"outage_polygon"
+					  ]}
+				}
 
-				// convert timestamps
-// 				var timezone = {timeZone: "America/Los_Angeles"}
-// 				var outageStartTimeLocale = new Date(y.outageStartTime*1000).toLocaleString()
-// 				var lastUpdateTimeLocale = new Date(y.lastUpdateTime*1000).toLocaleString()
-// 				
-// 				// generate length of outage as a property
-// 				var duration = lastUpdateTimeLocale - outageStartTimeLocale
-// 				var outageInHours = (y.lastUpdateTime*1000 - y.outageStartTime*1000)/1000/60/60
-// 				var outageInHours = Math.round(outageInHours)
-// 				// build properties object
-// 				var timeObject = {outageStartTimeLocale: outageStartTimeLocale, lastUpdateTimeLocale: lastUpdateTimeLocale, outageInHours: outageInHours}
-				
-				
-				outageProps = Object.assign({kind: 'outage_polygon'}, outageName, props2geojson, timeObject)
+				var outageProps = Object.assign({kind: 'outage_polygon'}, outageName, props2geojson, timeObject, polygonTag)
 
 				// add the first point to the end of the polygon string because geojson
 				polygonCoords.push(polygonCoords[0])
@@ -96,12 +66,20 @@ async function getJson() {
 			// build the geojson point feature
 			var timeObject = makeTimeObject(y)
 			
-			var outageProps = Object.assign({kind: 'outage_point'}, outageName, y, timeObject)
+			var pointTag = {
+				"@ns:com:here:xyz": {
+				  "tags": [
+					"outage_points"
+				  ]}
+			}
+			
+			var outageProps = Object.assign({kind: 'outage_point'}, outageName, y, timeObject, pointTag)
 			
 			// thin out the properties
 			delete outageProps.outageDevices
 			delete outageProps.latitude
 			delete outageProps.longitude
+			
 			
 			// make the point
 			var outagePoint = {
@@ -131,6 +109,25 @@ async function getJson() {
 		// build properties object
 		var timeObject = {outageStartTimeLocale: outageStartTimeLocale, lastUpdateTimeLocale: lastUpdateTimeLocale, outageInHours: outageInHours}
 		return timeObject
+	}
+	
+	function makeRegionPoints(x){
+		var regionCoords
+	    regionCoords = [Number(x.longitude),Number(x.latitude)]
+		var regionPoint = {"type":"Point","coordinates": regionCoords}
+		var Pointfeature = {
+			type: 'Feature',
+			geometry: regionPoint,
+			id: x.id,
+			properties: {
+				id: x.id,
+				kind: 'region',
+				name: x.regionName,
+				outages: Number(x.numOutages)
+			}
+    	}  
+		data.push(Pointfeature)
+		
 	}
 	
 	return JSON.stringify({
