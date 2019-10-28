@@ -11,9 +11,10 @@ async function toXYZ() {
         if (res.ok) { // res.status >= 200 && res.status < 300
             return res;
         } else {
-        	let e = new Error(`Error during upload. Status: ${res.statusCode}; Body: ` + res.text());
+        	let body = await res.text();
+        	let e = new Error(`Error during upload. Status: ${res.statusCode}; Body: ` + body);
         	e.status = res.statusCode;
-        	e.body = res.text();
+        	e.body = body;
             throw e;
         }
     };
@@ -46,23 +47,43 @@ async function toXYZ() {
     .then(json => json.features.map ( f => f.id) );
 
 	console.log(`${outdatedFeatureIds.length} outdated features found`);
+	
     if (outdatedFeatureIds.length > 0) {
-		// Delete not updtaed features
-	    await fetch(`https://xyz.api.here.com/hub/spaces/${space}/features?id=` + outdatedFeatureIds.join(), {
-	        method: 'delete',
-	        headers: { 
-	    		"Authorization": `Bearer ${token}`,
-	    		"Accept": "application/x-empty"
-	        },
-	    })
-	    .then(checkStatus);
+    	var ids = outdatedFeatureIds.join();
+    	
+    	var ids= require("./ids.json").ids
+    	var idArr = [];
+    	while (ids.length > 8000) {
+    		let idx = ids.lastIndexOf(',', 8000);
+    		idArr.push
+    		(ids.substr(0, idx))
+    		ids = ids.substr(idx+1);
+    	}
+    	idArr.push(ids);
+    	
+    	console.log("Deleting in ${idArr.length} chunks.");
+    	var count = 0;
+    	
+    	idArr.each( ids => {
+    		// Delete not updtaed features
+    	    await fetch(`https://xyz.api.here.com/hub/spaces/${space}/features?id=` + ids, {
+    	        method: 'delete',
+    	        headers: { 
+    	    		"Authorization": `Bearer ${token}`,
+    	    		"Accept": "application/x-empty"
+    	        },
+    	    })
+    	    .then(checkStatus);
+    	    console.log(`Chunk #${count} deleted`);
+    	    count++;
+    	})
 	    
 	    console.log(`Outdated features deleted.`);
     }
 };
 
 async function handler(event, context) {
-	return new Promise ( (resolve, reject) => {
+	return new Promise ( async (resolve, reject) => {
 		try {
 			await toXYZ();
 			resolve("Upload done.");
