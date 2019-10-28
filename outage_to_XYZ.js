@@ -12,7 +12,7 @@ async function toXYZ() {
             return res;
         } else {
         	let body = await res.text();
-        	let e = new Error(`Error during upload. Status: ${res.statusCode}; Body: ` + body);
+        	let e = new Error(`Error during upload. Status: ${res.statusText}; Body: ` + body);
         	e.status = res.statusCode;
         	e.body = body;
             throw e;
@@ -61,10 +61,10 @@ async function toXYZ() {
     	}
     	idArr.push(ids);
     	
-    	console.log("Deleting in ${idArr.length} chunks.");
+    	console.log(`Deleting in ${idArr.length} chunks.`);
     	var count = 0;
     	
-    	idArr.each( ids => {
+    	idArr.forEach( async ids => {
     		// Delete not updtaed features
     	    await fetch(`https://xyz.api.here.com/hub/spaces/${space}/features?id=` + ids, {
     	        method: 'delete',
