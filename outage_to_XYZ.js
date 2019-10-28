@@ -95,7 +95,7 @@ async function handler(event, context) {
 	    	if (e.body) {
 	    		msg += "\nError: " + e.body;
 	    	}
-	    	cosole.error(msg);
+	    	console.error(msg);
 	    	reject(e);
 		}
 	});
