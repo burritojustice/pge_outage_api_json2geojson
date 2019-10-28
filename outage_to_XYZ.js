@@ -11,7 +11,10 @@ async function toXYZ() {
         if (res.ok) { // res.status >= 200 && res.status < 300
             return res;
         } else {
-            throw new Error(`Error during upload. Status: ${res.statusCode}`);
+        	let e = new Error(`Error during upload. Status: ${res.statusCode}; Body: ` + res.text());
+        	e.status = res.statusCode;
+        	e.body = res.text();
+            throw e;
         }
     };
 
@@ -59,7 +62,22 @@ async function toXYZ() {
 };
 
 async function handler(event, context) {
-	await toXYZ();
+	return new Promise ( (resolve, reject) => {
+		try {
+			await toXYZ();
+			resolve("Upload done.");
+		} catch (e) {
+	    	let msg = "Error during fetch and upload of data:" + e;
+	    	if (e.status) {
+	    		msg += "\nStatus: " + e.status;
+	    	}
+	    	if (e.body) {
+	    		msg += "\nError: " + e.body;
+	    	}
+	    	cosole.error(msg);
+	    	reject(e);
+		}
+	});
 };
 
 module.exports.handler = handler;
