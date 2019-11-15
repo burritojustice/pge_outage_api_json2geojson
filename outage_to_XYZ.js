@@ -3,7 +3,10 @@ const fetch = require('node-fetch'),
 var getGeoJson = require("./outages.js").getGeoJson;
 
 async function toXYZ(space, token) {
-    async function checkStatus(res) {
+	const space = process.argv.length > 2 ? process.argv[2] : process.env.XYZ_SPACE;
+	const token = process.argv.length > 3 ? process.argv[3] : process.env.XYZ_TOKEN;
+
+	async function checkStatus(res) {
         if (res.ok) { // res.status >= 200 && res.status < 300
             return res;
         } else {
