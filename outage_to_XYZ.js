@@ -1,12 +1,8 @@
-const http  = require("https"),
-      fetch = require('node-fetch'),
+const fetch = require('node-fetch'),
       path  = require('path');
 var getGeoJson = require("./outages.js").getGeoJson;
 
-async function toXYZ() {
-	const space = process.argv.length > 2 ? process.argv[2] : process.env.XYZ_SPACE;
-	const token = process.argv.length > 3 ? process.argv[3] : process.env.XYZ_TOKEN;
-
+async function toXYZ(space, token) {
     async function checkStatus(res) {
         if (res.ok) { // res.status >= 200 && res.status < 300
             return res;
@@ -20,9 +16,11 @@ async function toXYZ() {
     };
 
     // Upload current data
-	await fetch(`https://xyz.api.here.com/hub/spaces/${space}/features`, {
+    var features = await getGeoJson();
+//    console.log(new Date().toISOString() + ": New Features:\n", features);
+	await fetch(`https://xyz.api.here.com/hub/spaces/${space}/features?addTags=current`, {
         method: 'put',
-        body:    await getGeoJson(),
+        body:    features,
         headers: {
         	'Content-Type': 'application/geo+json',
     		"Authorization": `Bearer ${token}`,
@@ -31,55 +29,38 @@ async function toXYZ() {
     })
     .then(checkStatus)
     .then(res => res.json())
-    .then(json => console.log(`Data uploaded. ${json.features.length} features`));
-	
+    .then(json => console.log(new Date().toISOString() + `: ${json.features.length} current features updated`));
 	
 	// Search not updated features
-	var outdatedFeatureIds = await fetch(`https://xyz.api.here.com/hub/spaces/${space}/search?selection=ids&f.updatedAt%3C` + (new Date().getTime() - (1000*60*60)), {       // search for everything older 1h
-        method: 'get',
-        headers: { 
-    		"Authorization": `Bearer ${token}`,
-    		"Accept": "application/geo+json"
-        },
-    })
-    .then(checkStatus)
-    .then(res => res.json())
-    .then(json => json.features.map ( f => f.id) );
-
-	console.log(`${outdatedFeatureIds.length} outdated features found`);
+	var bulkSize = 5000;
+	do {
+		var outdatedFeatures = await fetch(`https://xyz.api.here.com/hub/spaces/${space}/search?selection=ids&limit=${bulkSize}&tags=current&p.lastFetchTime=lt=` + (new Date().getTime() - (1000*60*60)), {       // search for everything older 1h
+	        method: 'get',
+	        headers: { 
+	    		"Authorization": `Bearer ${token}`,
+	    		"Accept": "application/geo+json"
+	        },
+	    })
+	    .then(checkStatus)
+	    .then(res => res.json());
 	
-    if (outdatedFeatureIds.length > 0) {
-    	var ids = outdatedFeatureIds.join();
-    	
-    	var ids= require("./ids.json").ids
-    	var idArr = [];
-    	while (ids.length > 8000) {
-    		let idx = ids.lastIndexOf(',', 8000);
-    		idArr.push
-    		(ids.substr(0, idx))
-    		ids = ids.substr(idx+1);
-    	}
-    	idArr.push(ids);
-    	
-    	console.log(`Deleting in ${idArr.length} chunks.`);
-    	var count = 0;
-    	
-    	idArr.forEach( async ids => {
-    		// Delete not updtaed features
-    	    await fetch(`https://xyz.api.here.com/hub/spaces/${space}/features?id=` + ids, {
-    	        method: 'delete',
-    	        headers: { 
-    	    		"Authorization": `Bearer ${token}`,
-    	    		"Accept": "application/x-empty"
-    	        },
-    	    })
-    	    .then(checkStatus);
-    	    console.log(`Chunk #${count} deleted`);
-    	    count++;
-    	})
-	    
-	    console.log(`Outdated features deleted.`);
-    }
+		console.log(new Date().toISOString() + `: ${outdatedFeatures.features.length} outdated features found`);
+		
+	    if (outdatedFeatures.features.length > 0) {
+	    	await fetch(`https://xyz.api.here.com/hub/spaces/${space}/features?addTags=archived&removeTags=current`, {
+	            method: 'post',
+	            body:    outdatedFeatures,
+	            headers: {
+	            	'Content-Type': 'application/geo+json',
+	        		"Authorization": `Bearer ${token}`,
+	        		"Accept": "application/geo+json"
+	            },
+	        })
+	        .then(checkStatus)
+	        .then(res => res.json())
+	        .then(json => console.log(new Date().toISOString() + `: ${json.features.length} archived features updated`));
+	    }
+	} while (outdatedFeatures.features.length >= bulkSize);
 };
 
 async function handler(event, context) {
@@ -88,7 +69,7 @@ async function handler(event, context) {
 			await toXYZ();
 			resolve("Upload done.");
 		} catch (e) {
-	    	let msg = "Error during fetch and upload of data:" + e;
+	    	let msg = new Date().toISOString() + ": Error during fetch and upload of data:" + e;
 	    	if (e.status) {
 	    		msg += "\nStatus: " + e.status;
 	    	}
@@ -104,6 +85,9 @@ async function handler(event, context) {
 module.exports.handler = handler;
 
 if (path.basename(process.argv[1]) == path.basename(__filename)){
-    console.log("I'm called directly. Running right away");
-	toXYZ();
+    console.log(new Date().toISOString() + ": I'm called directly. Running right away");
+	const space = process.argv.length > 2 ? process.argv[2] : process.env.XYZ_SPACE;
+	const token = process.argv.length > 3 ? process.argv[3] : process.env.XYZ_TOKEN;
+
+	toXYZ(space, token);
 };

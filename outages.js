@@ -4,9 +4,8 @@ const fetch = require('node-fetch');
 // argv = argv["_"]
 // console.dir(argv,argv[0],argv[1]);
 
-var data = []
-
 async function getJson() {
+	var data = [];
 	var url = 'https://apim.pge.com/cocoutage/outages/getOutagesRegions?regionType=city&expand=true'
 
 //	var url = 'http://outages-prod.elasticbeanstalk.com/cweb/outages/getOutagesRegions?regionType=city&expand=true' //
@@ -14,8 +13,8 @@ async function getJson() {
 // 	var url = 'https://www.monkeybrains.net/map/outages.php?pge' 
 
 	const outages = await fetch(url).then(r => r.json());
-    
-    outages.outagesRegions.forEach(x => {
+    let now = new Date().getTime();
+    if (outages && outages.outagesRegions) outages.outagesRegions.forEach(x => {
     
     	// makeRegionPoints(x) // adding region points in the same space doesn't really look good, confusing
 		
@@ -95,7 +94,7 @@ async function getJson() {
 		})		
 	});   
 	
-	console.log(data.length,'features')
+	console.log(new Date().toISOString() + ": " + data.length,'features')
 	
 	function makeTimeObject(props){
 		var timezone = {timeZone: "America/Los_Angeles"}
@@ -106,8 +105,9 @@ async function getJson() {
 		var duration = lastUpdateTimeLocale - outageStartTimeLocale
 		var outageInHours = (props.lastUpdateTime*1000 - props.outageStartTime*1000)/1000/60/60
 		var outageInHours = Math.round(outageInHours)
+		var lastFetchTime = now;
 		// build properties object
-		var timeObject = {outageStartTimeLocale: outageStartTimeLocale, lastUpdateTimeLocale: lastUpdateTimeLocale, outageInHours: outageInHours}
+		var timeObject = {outageStartTimeLocale: outageStartTimeLocale, lastUpdateTimeLocale: lastUpdateTimeLocale, outageInHours: outageInHours, lastFetchTime: lastFetchTime}
 		return timeObject
 	}
 	
