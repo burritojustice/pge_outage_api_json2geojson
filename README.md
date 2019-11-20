@@ -15,9 +15,9 @@ This code is now running in an AWS Lambda and is being updated every 10 minutes.
 https://s3.amazonaws.com/xyz-demo/scenes/xyz_tangram/index.html?space=12mlXZ5H&token=AMOsiCPNQ_HWiEAYilO7el8&basemap=xyz-pixel&buildings=1&label=&colors=range&points=4&lines=0&outlines=3&places=1&roads=1&hexbins=0&water=0&tags=outage_polygon+current%2Bcurrent&property=outageInHours&palette=colorBrewerYlGnBu&paletteFlip=false&rangeFilter=1&sort=values&hideOutliers=false#9.1/38.9864/-122.4870
 
 
-Current outages are tagged with `current`, but once an outage disappears, we tag it with `archived`. We have a few months worth of outages archived -- you might be able to use HERE XYZ property search and use `updatedAt` and `lastFetchTime` to filter by time.
-
 ![outage map](pge_outages.png)
+
+Current outages are tagged with `current`, but once an outage disappears, we now tag it with `archived`. We have a few months worth of outages archived -- you might be able to use HERE XYZ property search and use `updatedAt` and `lastFetchTime` to filter by time.
 
 There's a [sample here](outages.geojson), but here's what a record looks like:
 
