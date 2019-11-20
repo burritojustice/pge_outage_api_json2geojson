@@ -17,7 +17,9 @@ https://s3.amazonaws.com/xyz-demo/scenes/xyz_tangram/index.html?space=12mlXZ5H&t
 
 Current outages are tagged with `current`, but once an outage disappears, we tag it with `archived`. We have a few months worth of outages archived -- you might be able to use HERE XYZ property search and use `updatedAt` and `lastFetchTime` to filter by time.
 
-Here's what a record looks like:
+![outage map](pge_outages.png)
+
+There's a [sample here](outages.geojson), but here's what a record looks like:
 
     {
       "id": "711261_polygon",
