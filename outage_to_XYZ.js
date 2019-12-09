@@ -3,10 +3,10 @@ const fetch = require('node-fetch'),
 var getGeoJson = require("./outages.js").getGeoJson;
 
 async function toXYZ(space, token) {
-	const space = process.argv.length > 2 ? process.argv[2] : process.env.XYZ_SPACE;
-	const token = process.argv.length > 3 ? process.argv[3] : process.env.XYZ_TOKEN;
+	if (!space) space=process.env.XYZ_SPACE;
+	if (!token) token=process.env.XYZ_TOKEN;
 
-	async function checkStatus(res) {
+    async function checkStatus(res) {
         if (res.ok) { // res.status >= 200 && res.status < 300
             return res;
         } else {
@@ -36,8 +36,9 @@ async function toXYZ(space, token) {
 	
 	// Search not updated features
 	var bulkSize = 5000;
+	var now = new Date().getTime(), toArchiveTime = now - (1000*60*20);
 	do {
-		var outdatedFeatures = await fetch(`https://xyz.api.here.com/hub/spaces/${space}/search?selection=ids&limit=${bulkSize}&tags=current&p.lastFetchTime=lt=` + (new Date().getTime() - (1000*60*60)), {       // search for everything older 1h
+		var outdatedFeatures = await fetch(`https://xyz.api.here.com/hub/spaces/${space}/search?selection=ids&limit=${bulkSize}&tags=current&p.lastFetchTime=lt=` + toArchiveTime, {       // search for everything older 1h
 	        method: 'get',
 	        headers: { 
 	    		"Authorization": `Bearer ${token}`,
@@ -48,11 +49,18 @@ async function toXYZ(space, token) {
 	    .then(res => res.json());
 	
 		console.log(new Date().toISOString() + `: ${outdatedFeatures.features.length} outdated features found`);
+//		console.log(new Date().toISOString() + ": Features\n" + JSON.stringify(outdatedFeatures) );
+		outdatedFeatures.features.forEach( f => {
+			f.properties = {
+				estimatedOutageEndTime: now,
+				archived: true
+			};
+		});
 		
 	    if (outdatedFeatures.features.length > 0) {
 	    	await fetch(`https://xyz.api.here.com/hub/spaces/${space}/features?addTags=archived&removeTags=current`, {
 	            method: 'post',
-	            body:    outdatedFeatures,
+	            body:    JSON.stringify(outdatedFeatures),
 	            headers: {
 	            	'Content-Type': 'application/geo+json',
 	        		"Authorization": `Bearer ${token}`,
