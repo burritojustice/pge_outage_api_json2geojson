@@ -51,11 +51,10 @@ async function toXYZ(space, token) {
 		console.log(new Date().toISOString() + `: ${outdatedFeatures.features.length} outdated features found`);
 //		console.log(new Date().toISOString() + ": Features\n" + JSON.stringify(outdatedFeatures) );
 		outdatedFeatures.features.forEach( f => {
-			f.properties = {
-				estimatedOutageEndTime: now,
-				archived: true
-			};
-		});
+			if (!f.properties) f.properties={};
+			f.properties.estimatedOutageEndTime = now;
+			f.properties.archived = true;
+		})
 		
 	    if (outdatedFeatures.features.length > 0) {
 	    	await fetch(`https://xyz.api.here.com/hub/spaces/${space}/features?addTags=archived&removeTags=current`, {

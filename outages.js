@@ -33,6 +33,12 @@ async function getJson() {
 				})
 				var props2geojson = Object.assign({},y)
 				
+				// all the numbers coming from the json are actually strings, need to convert so XYZ can index them properly
+				props2geojson.crewEta = parseInt(props2geojson.crewEta)
+				props2geojson.lastUpdateTime = parseInt(props2geojson.lastUpdateTime)
+				props2geojson.estCustAffected = parseInt(props2geojson.estCustAffected)
+				props2geojson.outageStartTime = parseInt(props2geojson.outageStartTime)
+				
 				// thin out the properties
 				delete props2geojson.outageDevices
 				delete props2geojson.latitude
@@ -78,7 +84,10 @@ async function getJson() {
 			delete outageProps.outageDevices
 			delete outageProps.latitude
 			delete outageProps.longitude
-			
+			outageProps.crewEta = parseInt(outageProps.crewEta)
+			outageProps.lastUpdateTime = parseInt(outageProps.lastUpdateTime)
+			outageProps.estCustAffected = parseInt(outageProps.estCustAffected)
+			outageProps.outageStartTime = parseInt(outageProps.outageStartTime)		
 			
 			// make the point
 			var outagePoint = {
@@ -98,8 +107,8 @@ async function getJson() {
 	
 	function makeTimeObject(props){
 		var timezone = {timeZone: "America/Los_Angeles"}
-		var outageStartTimeLocale = new Date(props.outageStartTime*1000).toLocaleString()
-		var lastUpdateTimeLocale = new Date(props.lastUpdateTime*1000).toLocaleString()
+		var outageStartTimeLocale = new Date(props.outageStartTime*1000).toLocaleString(timezone)
+		var lastUpdateTimeLocale = new Date(props.lastUpdateTime*1000).toLocaleString(timezone)
 		
 		// generate length of outage as a property
 		var duration = lastUpdateTimeLocale - outageStartTimeLocale
