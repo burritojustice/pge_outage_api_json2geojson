@@ -49,7 +49,9 @@ async function toXYZ(space, token) {
 	    .then(res => res.json());
 	
 		console.log(new Date().toISOString() + `: ${outdatedFeatures.features.length} outdated features found`);
+//		console.log(new Date().toISOString() + ": Features\n" + JSON.stringify(outdatedFeatures) );
 		outdatedFeatures.features.forEach( f => {
+			if (!f.properties) f.properties={};
 			f.properties.estimatedOutageEndTime = now;
 			f.properties.archived = true;
 		})
